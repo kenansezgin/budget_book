@@ -1,0 +1,4 @@
+git status                                          # Überprüfe den Status
+git add .                                           # Füge alle Änderungen hinzu (oder git add <dateiname.py> für eine spezifische Datei)
+git commit -m "Kurze Beschreibung der Änderungen"   # Commit der Änderungen
+git push origin main                                # Push zu GitHub
