@@ -1,29 +1,31 @@
 import sqlite3
+
+# Erlaubt globale Variablen
+import glob
+
+# Erlaubt Dateisystemdaten
+import os
 from datetime import datetime, date
 
-# Adapter: datetime.date -> str (für Speicherung im deutschen Format TT.MM.JJJJ)
-sqlite3.register_adapter(date, lambda d: d.strftime("%d.%m.%Y"))
-sqlite3.register_adapter(datetime, lambda d: d.strftime("%d.%m.%Y"))
-
-# Konverter: str -> datetime.date (für Abruf im deutschen Format TT.MM.JJJJ)
-sqlite3.register_converter(
-    "DATE", lambda s: datetime.strptime(s.decode(), "%d.%m.%Y").date()
-)
-
-# Verbindung zur Datenbank herstellen mit aktivierten Konvertern
-connection = sqlite3.connect(
-    "example_database.db", detect_types=sqlite3.PARSE_DECLTYPES
-)
-cursor = connection.cursor()
-
-# Aktuelles Datum abrufen
-today_date = datetime.now().date()  # Heute als Datum (TT.MM.JJJJ)
+# Konstante um den Datenbankpfad festzulegen
+DB_PATH = "./example_database_2.db"
 
 
-def create_db():
-    # Tabelle für fix costs erstellen
-    cursor.execute(
-        """CREATE TABLE IF NOT EXISTS fix_costs (
+def check_db():
+    # does the path exists
+    if not os.path.exists(DB_PATH):
+        # Connection of SQLite DB is now inside the variable conn
+        conn = sqlite3.connect(DB_PATH)
+
+        create_table(conn)
+        conn.close
+
+
+def create_table(conn):
+    cursor = conn.cursor()
+    cursor.excute(
+        """
+    CREATE TABLE IF NOT EXISTS fix_costs (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         rent FLOAT,
         electricity FLOAT,
@@ -34,12 +36,12 @@ def create_db():
         website_hosting FLOAT,
         website FLOAT,
         apple_icloud_50GB FLOAT
-        )"""
+    """
     )
 
-    # Tabelle für Ausgaben erstellen
     cursor.execute(
-        """CREATE TABLE IF NOT EXISTS expenses (
+        """
+    CREATE TABLE IF NOT EXISTS expenses (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         date DATE NOT NULL,
         food FLOAT,
@@ -48,8 +50,23 @@ def create_db():
         hygiene FLOAT,
         books FLOAT,
         museum FLOAT
-    )"""
+    """
     )
+    conn.commit()
+
+
+# Adapter: datetime.date -> str (für Speicherung im deutschen Format TT.MM.JJJJ)
+sqlite3.register_adapter(date, lambda d: d.strftime("%d.%m.%Y"))
+sqlite3.register_adapter(datetime, lambda d: d.strftime("%d.%m.%Y"))
+
+# Konverter: str -> datetime.date (für Abruf im deutschen Format TT.MM.JJJJ)
+sqlite3.register_converter(
+    "DATE", lambda s: datetime.strptime(s.decode(), "%d.%m.%Y").date()
+)
+
+
+# Aktuelles Datum abrufen
+today_date = datetime.now().date()  # Heute als Datum (TT.MM.JJJJ)
 
 
 def add_fix_costs():
@@ -78,17 +95,19 @@ def collect_expenses():
     )
 
 
-# Tabelle erstellen
-create_db()
+if __name__ == "__main__":
+    check_db()
+    # Fix kosten sammeln
+    add_fix_costs()
 
-# Fix kosten sammeln
-add_fix_costs()
+    # Ausgaben sammeln
+    collect_expenses()
 
-# Ausgaben sammeln
-collect_expenses()
+    # Änderungen speichern und Verbindung schließen
+    # connection.commit()
+    connection.close()
 
-# Änderungen speichern und Verbindung schließen
-connection.commit()
-connection.close()
+    print("SQLite-Datenbank und Tabelle erfolgreich erstellt und Daten hinzugefügt!")
 
-print("SQLite-Datenbank und Tabelle erfolgreich erstellt und Daten hinzugefügt!")
+
+# library streamlit: um eine webseite zu erstellen und datenbanken zu füllen
