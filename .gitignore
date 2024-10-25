@@ -1,3 +1,5 @@
 .venv/
 wiki.txt
 .DS_Store
+training.py
+training.db
