@@ -1,29 +1,30 @@
-# Importiere benötigte Module
-import sqlite3  # Datenbank
-import glob     # Für Dateisuche im Dateisystem
-import os       # Für Dateisystemoperationen
-from datetime import datetime, date  # Für Datumsmanipulation
+# Importiere benötigte Module
+import sqlite3  # Zum Arbeiten mit einer SQLite-Datenbank
+import glob     # Zum Suchen von Dateien im Dateisystem
+import os       # Zum Durchführen von Dateisystemoperationen
+from datetime import datetime  # Zum Arbeiten mit Datumsangaben
 
+# Heutiges Datum im Format TT.MM.JJJJ als String
+date = datetime.now().strftime("%d.%m.%Y")
 
 # Definiere den Pfad zur SQLite-Datenbank
 DB_PATH = "./example.db"
 
-# Prüft, ob die Datenbank vorhanden ist und erstellt sie, falls nicht
+# Prüft, ob die Datenbank vorhanden ist und erstellt sie, falls nicht
 def check_db(conn):
-    if os.path.exists(DB_PATH):
-        # Verbindet sich mit der SQLite-Datenbank
-        create_table(conn)
-        conn.close
+    if os.path.exists(DB_PATH):  # Überprüft, ob die Datei für die Datenbank existiert
+        create_table(conn)  # Falls die Datenbank existiert, werden die Tabellen erstellt
+        conn.close  # Verbindung zur Datenbank wird geschlossen
 
 # Erstellt die Tabellen, wenn sie noch nicht existieren
 def create_table(conn):
-    cursor = conn.cursor()
+    cursor = conn.cursor()  # Erstellt einen Cursor zum Ausführen von SQL-Befehlen
     cursor.execute(
         """
         CREATE TABLE IF NOT EXISTS annual_overview (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             type TEXT NOT NULL,
-            financial_items TEXT NOT NULL,
+            financial_item TEXT NOT NULL,
             budget NUMERIC,
             january NUMERIC,
             february NUMERIC,
@@ -39,12 +40,17 @@ def create_table(conn):
             december NUMERIC,
             total NUMERIC
         );
+        """
+    )  # Erstellt die Tabelle annual_overview zur Speicherung der monatlichen Ausgabenübersicht, falls sie nicht existiert
+    conn.commit()  # Speichert die Änderungen in der Datenbank
 
-        -- Tabellen für tägliche variable Ausgaben
+    cursor.execute(
+    	"""
+        -- Tabelle für tägliche variable Ausgaben
         CREATE TABLE IF NOT EXISTS daily_variable_expenses (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             date TEXT,
-            food NUMERIC
+            food NUMERIC,
             groceries NUMERIC,
             transport NUMERIC,
             hygiene NUMERIC,
@@ -52,111 +58,102 @@ def create_table(conn):
             accommodation NUMERIC,
             clothing NUMERIC,
             museum NUMERIC,
+            total NUMERIC
         );
         """
-    )
-    conn.commit()  # Speichert Änderungen in der Datenbank
+    )  # Erstellt die Tabelle daily_variable_expenses zur Speicherung der täglichen Ausgaben, falls sie nicht existiert
+    conn.commit()  # Speichert Änderungen in der Datenbank
 
-
-
-# Adapter: datetime.date -> str (für Speicherung im deutschen Format TT.MM.JJJJ)
-sqlite3.register_adapter(date, lambda d: d.strftime("%d.%m.%Y"))
-sqlite3.register_adapter(datetime, lambda d: d.strftime("%d.%m.%Y"))
-
-# Konverter: str -> datetime.date (für Abruf im deutschen Format TT.MM.JJJJ)
-sqlite3.register_converter(
-    "DATE", lambda s: datetime.strptime(s.decode(), "%d.%m.%Y").date()
-)
-
-# Holt das heutige Datum im Format TT.MM.JJJJ
-today_date = datetime.now().date()
-
-# Fügt festgelegte Fixkosten in die Tabelle ein
-def add_fix_values(conn):
-    cursor = conn.cursor()
-    cursor.execute(
+# Fügt festgelegte Fixkosten in die Tabelle annual_overview ein
+def add_values_to_overview(conn):
+    cursor = conn.cursor()  # Erstellt einen Cursor zum Ausführen von SQL-Befehlen
+    cursor.executemany(
         """
-        INSERT INTO annual_overview (type, financial_item, budget, january, february, march, april, may, june, july, august, september, november, december, total)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO annual_overview (type, financial_item, budget, january, february, march, april, may, june, july, august, september, october, november, december, total)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         [
-            ("income", "income", 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000),
-            ("fix", "rent", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-            ("fix", "electricity", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-            ("fix", "gas", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-            ("fix", "dsl", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-            ("fix", "mobile_data", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-            ("fix", "monthly_ticket", 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40),
-            ("fix", "website_hosting", 1.90, 1.90, 1.90, 1.90, 1.90, 1.90, 1.90, 1.90, 1.90, 1.90, 1.90, 1.90, 1.90),
-            ("fix", "website", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-            ("fix", "apple_icloud_50GB", 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
-            ("var", "food", 300, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-            ("var", "groceries", 200, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-            ("var", "transport", 50, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-            ("var", "hygiene", 50, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-            ("var", "books", 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-            ("var", "accommodation", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-            ("var", "clothing", 15, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-            ("var", "museum", 10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+            ("income", "income", 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 0),
+            ("fix", "rent", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+            ("fix", "electricity", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+            ("fix", "gas", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+            ("fix", "dsl", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+            ("fix", "mobile_data", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+            ("fix", "monthly_ticket", 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 0),
+            ("fix", "website_hosting", 1.90, 1.90, 1.90, 1.90, 1.90, 1.90, 1.90, 1.90, 1.90, 1.90, 1.90, 1.90, 1.90, 0),
+            ("fix", "website", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+            ("fix", "apple_icloud_50GB", 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0),
+            ("var", "food", 300, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+            ("var", "groceries", 200, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+            ("var", "transport", 50, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+            ("var", "hygiene", 50, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+            ("var", "books", 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+            ("var", "accommodation", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+            ("var", "clothing", 15, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+            ("var", "museum", 10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
         ]
-    )
-    conn.commit()  # Speichert Änderungen in der Datenbank
+    )  # Fügt mehrere vorab festgelegte Datensätze für fixierte und variable Kosten in die Tabelle annual_overview ein
+    conn.commit()  # Speichert die Änderungen in der Datenbank
 
-# Sammelt Benutzereingaben für tägliche Ausgaben und speichert diese
+# Sammelt Benutzereingaben für tägliche Ausgaben und speichert diese
 def collect_variable_expenses(conn):
-    cursor = conn.cursor()
+    cursor = conn.cursor()  # Erstellt einen Cursor zum Ausführen von SQL-Befehlen
 
-    # Benutzereingaben für verschiedene Ausgabenkategorien
+    # Benutzereingaben für verschiedene Ausgabenkategorien
     while True:
         try:
-            food_value = float(input("Heutige Ausgaben für Essen?: "))
+            food = float(input("Heutige Ausgaben für Essen?: "))
             break
         except ValueError:
             print("Das war keine korrekte Angabe. Bitte versuche es erneut.")
 
     while True:
         try:
-            groceries_value = float(input("Heutige Ausgaben für Lebensmittel?: "))
+            groceries = float(input("Heutige Ausgaben für Lebensmittel?: "))
             break
         except ValueError:
             print("Das war keine korrekte Angabe. Bitte versuche es erneut.")
 
     while True:
         try:
-            boldt_value = float(input("Heutige Ausgaben für Boldt?: "))
+            transport = float(input("Heutige Ausgaben für Transport?: "))
             break
         except ValueError:
             print("Das war keine korrekte Angabe. Bitte versuche es erneut.")
 
-    # Einfügen der heutigen Ausgaben in die Tabelle
-    # Programm muss erkennen welches Datum wir heute haben und es in die richtige Tabelle mit dem richtigen Monat in die Zeile mit dem richtigen Monat hineinsetzen.
-    # das benötige ich print(  today_date.month) und ich benötige ich vermutlich eine dictionary
+    # Fügt die Benutzereingaben als heutigen Ausgabeneintrag in die Tabelle daily_variable_expenses ein
     cursor.execute(
         """
-        INSERT INTO variable_costs (date, description, budget, january, february, march, april, may, june, july, august, september, october, november, december)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO daily_variable_expenses (date, food, groceries, transport, hygiene, books, accommodation, clothing, museum, total)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) 
         """,
-        [today_date, "food", food_value, groceries_value, boldt_value]
-
-        
-      
+        [date, food, groceries, transport, 0, 0, 0, 0, 0, 0]
     )
-    conn.commit()
-
+    conn.commit()  # Speichert die Änderungen in der Datenbank
+    
+# Methode, die die Gesamtsummer der täglichen variablen Ausgaben in der Tabelle annual_overview im entsprechenden Monat einfügt
+def variable_expenses_to_annual_overview(conn):
+    cursor = conn.cursor()
+    
+    
+	
+	
 if __name__ == "__main__":
     # Verbindung zur SQLite-Datenbank
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(DB_PATH)  # Stellt eine Verbindung zur Datenbank her
 
-    # Überprüfen und Erstellen der Datenbank und Tabellen
-    check_db(conn)
+    # Überprüfen und Erstellen der Datenbank und Tabellen
+    check_db(conn)  # Ruft die Funktion zum Überprüfen und Erstellen der Tabellen auf
 
-    # Festgelegte Fixkosten sammeln und in die Datenbank einfügen
-    add_fix_values(conn)
+    # Festgelegte Fixkosten sammeln und in die Datenbank einfügen
+    add_values_to_overview(conn)  # Fügt die vorab festgelegten Fixkosten in die Tabelle annual_overview ein
 
-    # Tägliche Ausgaben sammeln und in die Datenbank einfügen
-    collect_expenses(conn)
+    # Tägliche Ausgaben sammeln und in die Datenbank einfügen
+    collect_variable_expenses(conn)  # Ruft die Funktion zum Sammeln und Einfügen der täglichen Ausgaben auf
+    
+    variable_expenses_to_annual_overview(conn)  # Überträgt die täglichen Ausgaben in die Monatsübersicht (noch zu implementieren)
 
     # Verbindung zur Datenbank schließen
-    conn.close()
+    conn.close()  # Schließt die Verbindung zur Datenbank
 
-    print("SQLite-Datenbank und Tabellen erfolgreich erstellt und Daten hinzugefügt!")
+    print("SQLite-Datenbank und Tabellen erfolgreich erstellt und Daten hinzugefügt!")  # Erfolgsmeldung
