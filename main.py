@@ -22,7 +22,8 @@ def create_table(conn):
         """
         CREATE TABLE IF NOT EXISTS annual_overview (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            description TEXT NOT NULL,
+            type TEXT NOT NULL,
+            financial_items TEXT NOT NULL,
             budget NUMERIC,
             january NUMERIC,
             february NUMERIC,
@@ -39,141 +40,24 @@ def create_table(conn):
             total NUMERIC
         );
 
-        -- Tabellen für alle Monate
-        CREATE TABLE IF NOT EXISTS january (
+        -- Tabellen für tägliche variable Ausgaben
+        CREATE TABLE IF NOT EXISTS daily_variable_expenses (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             date TEXT,
-            food NUMERIC,
-            boldt NUMERIC,
+            food NUMERIC
             groceries NUMERIC,
+            transport NUMERIC,
             hygiene NUMERIC,
             books NUMERIC,
-            museum NUMERIC
-        );
-        
-        CREATE TABLE IF NOT EXISTS february (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            date TEXT,
-            food NUMERIC,
-            boldt NUMERIC,
-            groceries NUMERIC,
-            hygiene NUMERIC,
-            books NUMERIC,
-            museum NUMERIC
-        );
-        
-        CREATE TABLE IF NOT EXISTS march (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            date TEXT,
-            food NUMERIC,
-            boldt NUMERIC,
-            groceries NUMERIC,
-            hygiene NUMERIC,
-            books NUMERIC,
-            museum NUMERIC
-        );
-        
-        CREATE TABLE IF NOT EXISTS april (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            date TEXT,
-            food NUMERIC,
-            boldt NUMERIC,
-            groceries NUMERIC,
-            hygiene NUMERIC,
-            books NUMERIC,
-            museum NUMERIC
-        );
-        
-        CREATE TABLE IF NOT EXISTS may (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            date TEXT,
-            food NUMERIC,
-            boldt NUMERIC,
-            groceries NUMERIC,
-            hygiene NUMERIC,
-            books NUMERIC,
-            museum NUMERIC
-        );
-        
-        CREATE TABLE IF NOT EXISTS june (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            date TEXT,
-            food NUMERIC,
-            boldt NUMERIC,
-            groceries NUMERIC,
-            hygiene NUMERIC,
-            books NUMERIC,
-            museum NUMERIC
-        );
-        
-        CREATE TABLE IF NOT EXISTS july (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            date TEXT,
-            food NUMERIC,
-            boldt NUMERIC,
-            groceries NUMERIC,
-            hygiene NUMERIC,
-            books NUMERIC,
-            museum NUMERIC
-        );
-        
-        CREATE TABLE IF NOT EXISTS august (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            date TEXT,
-            food NUMERIC,
-            boldt NUMERIC,
-            groceries NUMERIC,
-            hygiene NUMERIC,
-            books NUMERIC,
-            museum NUMERIC
-        );
-        
-        CREATE TABLE IF NOT EXISTS september (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            date TEXT,
-            food NUMERIC,
-            boldt NUMERIC,
-            groceries NUMERIC,
-            hygiene NUMERIC,
-            books NUMERIC,
-            museum NUMERIC
-        );
-        
-        CREATE TABLE IF NOT EXISTS october (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            date TEXT,
-            food NUMERIC,
-            boldt NUMERIC,
-            groceries NUMERIC,
-            hygiene NUMERIC,
-            books NUMERIC,
-            museum NUMERIC
-        );
-        
-        CREATE TABLE IF NOT EXISTS november (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            date TEXT,
-            food NUMERIC,
-            boldt NUMERIC,
-            groceries NUMERIC,
-            hygiene NUMERIC,
-            books NUMERIC,
-            museum NUMERIC
-        );
-        
-        CREATE TABLE IF NOT EXISTS december (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            date TEXT,
-            food NUMERIC,
-            boldt NUMERIC,
-            groceries NUMERIC,
-            hygiene NUMERIC,
-            books NUMERIC,
-            museum NUMERIC
+            accommodation NUMERIC,
+            clothing NUMERIC,
+            museum NUMERIC,
         );
         """
     )
     conn.commit()  # Speichert Änderungen in der Datenbank
+
+
 
 # Adapter: datetime.date -> str (für Speicherung im deutschen Format TT.MM.JJJJ)
 sqlite3.register_adapter(date, lambda d: d.strftime("%d.%m.%Y"))
@@ -192,26 +76,34 @@ def add_fix_values(conn):
     cursor = conn.cursor()
     cursor.execute(
         """
-        INSERT INTO annual_overview (description, budget, january, february, march, april, may, june, july, august, september, november, december, total)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO annual_overview (type, financial_item, budget, january, february, march, april, may, june, july, august, september, november, december, total)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         [
-            ("income", 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000),
-            ("rent", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-            ("electricity", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-            ("gas", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-            ("dsl", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-            ("mobile_data", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-            ("monthly_ticket", 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40),
-            ("website_hosting", 1.90, 1.90, 1.90, 1.90, 1.90, 1.90, 1.90, 1.90, 1.90, 1.90, 1.90, 1.90, 1.90),
-            ("website", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-            ("apple_icloud_50GB", 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
-        ],
+            ("income", "income", 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000),
+            ("fix", "rent", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+            ("fix", "electricity", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+            ("fix", "gas", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+            ("fix", "dsl", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+            ("fix", "mobile_data", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+            ("fix", "monthly_ticket", 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40),
+            ("fix", "website_hosting", 1.90, 1.90, 1.90, 1.90, 1.90, 1.90, 1.90, 1.90, 1.90, 1.90, 1.90, 1.90, 1.90),
+            ("fix", "website", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+            ("fix", "apple_icloud_50GB", 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
+            ("var", "food", 300, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+            ("var", "groceries", 200, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+            ("var", "transport", 50, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+            ("var", "hygiene", 50, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+            ("var", "books", 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+            ("var", "accommodation", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+            ("var", "clothing", 15, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+            ("var", "museum", 10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+        ]
     )
     conn.commit()  # Speichert Änderungen in der Datenbank
 
 # Sammelt Benutzereingaben für tägliche Ausgaben und speichert diese
-def collect_expenses(conn):
+def collect_variable_expenses(conn):
     cursor = conn.cursor()
 
     # Benutzereingaben für verschiedene Ausgabenkategorien
