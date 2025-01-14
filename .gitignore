@@ -1,3 +1,16 @@
+.venv/
+test.py
+wiki.txt
+
+# Arbeistbereichsdatei von VS Code
+Work.code-workspace
+
+# Systemdatei von macOS
+.DS_Store
+
+
+
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
