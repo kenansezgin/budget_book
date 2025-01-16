@@ -12,46 +12,47 @@ def nutzereingabe():
     return produkt_name, menge, preis, datum
 
 
-df = nutzereingabe()
+def create_db():
+    # Gibt uns ein Objekt "connection" zurück damit wir mit der Datenbank interaggieren können
+    connection = sqlite3.connect("products.db")
 
-print(df)
+    # Erlaubt uns SQL Befehle an die SQL Datenbank zu senden
+    cursor = connection.cursor()
+    return connection, cursor
 
-# produkt_name = input("Gebe das Produkt ein welches in die Tabelle eingetragen werden soll: ")
 
-# Gibt uns ein Objekt "connection" zurück damit wir mit der Datenbank interaggieren können
-connection = sqlite3.connect("products.db")
+def create_table(connection, cursor):
+    cursor.execute(
+        "CREATE TABLE IF NOT EXISTS verkaufstabelle (id INTEGER PRIMARY KEY, produkt_name TEXT, menge INTEGER, preis REAL, umsatz REAL)"
+    )
 
-# Gibt aus ob Änderungen stattgefunden haben
-print(connection.total_changes)
+    cursor.execute(
+        "CREATE TABLE IF NOT EXISTS monatsübersicht (monat TEXT, gesamtumsatz REAL, gesamt_verkaufsmenge INTEGER)"
+    )
 
-# Erlaubt uns SQL Befehle an die SQL Datenbank zu senden
-cursor = connection.cursor()
 
-cursor.execute(
-    "CREATE TABLE IF NOT EXISTS verkaufstabelle (id INTEGER PRIMARY KEY, produkt_name TEXT, menge INTEGER, preis REAL, umsatz REAL)"
-)
+def insert_values(connection, cursor, df):
 
-cursor.execute(
-    "CREATE TABLE IF NOT EXISTS monatsübersicht (monat TEXT, gesamtumsatz REAL, gesamt_verkaufsmenge INTEGER)"
-)
+    cursor.execute(
+        "INSERT OR IGNORE INTO verkaufstabelle (produkt_name, menge, preis, umsatz) VALUES ('shorts', 12, 9.99, 6.99);"
+    )
 
-cursor.execute(
-    """
-INSERT OR IGNORE INTO verkaufstabelle (produkt_name, menge, preis, umsatz)
-VALUES ('shorts', 12, 9.99, 6.99);
-"""
-)
+    cursor.execute("INSERT INTO monatsübersicht (monat) VALUES ('januar');")
 
-cursor.execute(
-    """
-INSERT INTO monatsübersicht (monat)
-VALUES ('januar');
-"""
-)
+    # Änderungen speichern und Verbindung schließen
+    connection.commit()
+    connection.close()
 
-# Änderungen speichern und Verbindung schließen
-connection.commit()
-connection.close()
+
+def main():
+    df = nutzereingabe()
+    x = create_db()
+    create_table(x[0], x[1])
+    insert_values(x[0], x[1], df)
+
+
+if __name__ == "__main__":
+    main()
 
 
 """
@@ -65,3 +66,6 @@ cursor = connection.cursor()
     # Tabellen erstellen
 create_tables(cursor)
 """
+
+# Gibt aus ob Änderungen stattgefunden haben
+# print(connection.total_changes)

@@ -1,6 +1,7 @@
 .venv/
 test.py
 wiki.txt
+.vscode/
 
 # Arbeistbereichsdatei von VS Code
 Work.code-workspace
