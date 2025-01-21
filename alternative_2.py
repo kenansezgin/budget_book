@@ -24,13 +24,11 @@ def create_table(connection, cursor):
     connection.commit()
 
 
-
-
 def insert_values(connection, cursor, df):
     produkt_name, menge, preis, monat = df
 
     cursor.execute(
-        "INSERT OR IGNORE INTO verkaufstabelle (produkt_name, menge, preis, umsatz) VALUES (?, ?, ?, ?, ?);",
+        "INSERT OR IGNORE INTO verkaufstabelle (produkt_name, menge, preis, monat, umsatz) VALUES (?, ?, ?, ?, ?);",
         (produkt_name, menge, preis, monat, menge * preis),
     )
 
@@ -39,9 +37,8 @@ def insert_values(connection, cursor, df):
         (monat,),
     )
 
-
     cursor.execute(
-        "UPDATE monatsübersicht SET gesamtumsatz = (SELECT SUM(umsatz) FROM verkaufstabelle) WHERE monat = 'January';
+        "UPDATE monatsübersicht SET gesamtumsatz = (SELECT SUM(umsatz) FROM verkaufstabelle) WHERE monat = 'January';"
     )
 
     # Änderungen speichern und Verbindung schließen
@@ -65,7 +62,6 @@ if __name__ == "__main__":
 # print(connection.total_changes)
 
 
-
 # UPDATE table_name
 # SET column1 = value1, column2 = value2, ...
 # WHERE condition;
@@ -75,4 +71,4 @@ if __name__ == "__main__":
 
 # SELECT SUM(column_name)
 # FROM table_name
-# WHERE condition; 
+# WHERE condition;
