@@ -36,7 +36,7 @@ def insert_values(connection, cursor, df):
 
     cursor.execute(
         "INSERT INTO monatsübersicht (monat) VALUES (?);",
-        (monat),
+        (monat,),
     )
 
 
