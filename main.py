@@ -1,45 +1,71 @@
 import sqlite3
 from datetime import datetime
 
+datum = datetime.now().strftime("%d-%m-%Y")
+
 
 def nutzereingabe():
     produkt_name = input("Gebe den Produktnamen ein: ")
     menge = int(input("Gebe die Menge ein: "))
-    preis = float(input("Gebe die Preis ein: "))
-    monat = input("Gebe Einkaufsmonat ein oder drücke Enter für heutiges monat: ")
-    if not monat:
-        monat = datetime.now().strftime("%B")
-    return produkt_name, menge, preis, monat
+    preis = float(input("Gebe den Preis ein: "))
+
+    return produkt_name, menge, preis
 
 
 def create_table(connection, cursor):
 
     cursor.execute(
-        "CREATE TABLE IF NOT EXISTS verkaufstabelle (id INTEGER PRIMARY KEY, produkt_name TEXT, menge INTEGER, preis REAL, umsatz REAL, monat TEXT)"
+        """
+        CREATE TABLE IF NOT EXISTS verkaufstabelle (
+            id INTEGER PRIMARY KEY,
+            datum TEXT,
+            produkt_name TEXT,
+            menge INTEGER,
+            preis REAL,
+            umsatz REAL
+        )  
+        """
     )
 
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS jahresübersicht (
+            id INTEGER PRIMARY KEY,
+            produkt_name TEXT,
+            budget REAL,
+            january REAL DEFAULT 0,
+            february REAL DEFAULT 0,
+            march REAL DEFAULT 0,
+            april REAL DEFAULT 0,
+            may REAL DEFAULT 0,
+            june REAL DEFAULT 0,
+            july REAL DEFAULT 0,
+            august REAL DEFAULT 0,
+            september REAL DEFAULT 0,
+            october REAL DEFAULT 0,
+            november REAL DEFAULT 0,
+            december REAL DEFAULT 0
+        );
+        """
+    )
     connection.commit()
 
 
 def insert_values(connection, cursor, df):
-    produkt_name, menge, preis, monat = df
-
-    cursor.execute(
-        "INSERT OR IGNORE INTO verkaufstabelle (produkt_name, menge, preis, umsatz, monat) VALUES (?, ?, ?, ?, ?);",
-        (produkt_name, menge, preis, menge * preis, monat),
-    )
+    produkt_name, menge, preis = df
 
     cursor.execute(
         """
-        CREATE VIEW IF NOT EXISTS monatsübersicht AS
-        SELECT
+        INSERT OR IGNORE INTO verkaufstabelle (
             produkt_name,
-            SUM(menge) AS verkaufsmenge_gesamt,
-            SUM (umsatz) AS umsatz_gesamt,
-            monat
-        FROM verkaufstabelle
-        GROUP BY produkt_name, monat;
-        """
+            menge, 
+            preis,
+            umsatz,
+            datum
+        ) 
+        VALUES (?, ?, ?, ?, ?);
+        """,
+        (produkt_name, menge, preis, menge * preis, datum),
     )
 
     # Änderungen speichern und Verbindung schließen
@@ -58,12 +84,6 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-#  cursor.execute(
-#         "INSERT OR IGNORE INTO monatsübersicht (produkt_name, verkaufsmenge_gesamt, umsatz_gesamt, monat) VALUES (?, ?, ?, ?);",
-#         (produkt_name, monat,),
-#     )
 
 
 # Gibt aus ob Änderungen stattgefunden haben
