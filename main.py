@@ -2,6 +2,8 @@ import sqlite3
 from datetime import datetime
 
 datum = datetime.now().strftime("%d-%m-%Y")
+print(datetime.now().strftime("%B"))
+print(f"{datum.strftime("%B")})
 
 
 def nutzereingabe():
@@ -57,19 +59,28 @@ def insert_values(connection, cursor, df):
     cursor.execute(
         """
         INSERT OR IGNORE INTO verkaufstabelle (
+            datum,
             produkt_name,
             menge, 
             preis,
-            umsatz,
-            datum
+            umsatz
         ) 
         VALUES (?, ?, ?, ?, ?);
         """,
-        (produkt_name, menge, preis, menge * preis, datum),
+        (datum, produkt_name, menge, preis, menge * preis),
     )
 
     # Änderungen speichern und Verbindung schließen
     connection.commit()
+
+
+def monthly_results(connection, cursor):
+    cursor.execute(
+        """
+        SELECT SUM(umsatz)
+        FROM verkaufstabelle
+        WHERE datum =  strftime("%B")"""
+    )
 
 
 def main():
@@ -79,6 +90,7 @@ def main():
     df = nutzereingabe()
     create_table(connection, cursor)
     insert_values(connection, cursor, df)
+    monthly_results(connection.cursor)
     connection.close()
 
 
