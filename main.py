@@ -99,10 +99,10 @@ def yearly_results(conn, cursor):
     )
 
     # ✅ Debug: Anzeige des DataFrames
-    print("🔍 **Lade Daten aus der Datenbank:**\n")
-    print(df.to_string(index=False))  # Bessere Anzeige
+    print("🔍 **Lade Daten aus der Datenbank in DataFrame:**\n")
+    print(df.to_string(index=False))  # Bessere Anzeige ohne die Index-Spalte anzuzeigen
 
-    # Konvertiere das Datum in ein echtes Datumsformat
+    # Konvertiere das Datum (String) in ein echtes Datumsformat (datetime Objekt)
     df["datum"] = pd.to_datetime(df["datum"], format="%d.%m.%Y")
     df["Monat"] = df["datum"].dt.month  # Extrahiere die Monatszahl
 
@@ -130,6 +130,7 @@ def yearly_results(conn, cursor):
     print(pivot_df.to_string())
 
     # 🔄 Sicherstellen, dass ALLE 12 Monate als Spalten vorhanden sind
+    #   ,weil in der Pivot-Tabelle aktuell nur die Monate enthalten sind, wo auch ein Umsatz entstanden ist.
     for monat in range(1, 13):
         if monat not in pivot_df.columns:
             pivot_df[monat] = 0  # Fehlende Monate hinzufügen

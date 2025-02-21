@@ -1,10 +1,16 @@
 .venv/
 test.py
+expenses.db
 wiki.txt
 .vscode/
 lerne_data_frame.py
-MySQLConnection.session.sql
-/Users/kenansezgin/Documents/PROJECTS/Haushaltsbuch/Users
+Meine_SQLite_Verbindung.session.sql
+/Users/kenansezgin/Documents/PROJECTS/Haushaltsbuch/
+übung.py
+testing.py
+test.db
+
+
 
 # Arbeistbereichsdatei von VS Code
 Work.code-workspace
