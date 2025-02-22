@@ -2,7 +2,6 @@ import sqlite3
 import pandas as pd
 from datetime import datetime
 
-# test
 # 📌 Monats-Mapping für die Spaltennamen in der Pivot-Tabelle
 MONAT_MAPPING = {
     1: "Januar",
