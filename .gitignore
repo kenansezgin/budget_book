@@ -1,14 +1,13 @@
 .venv/
-test.py
-expenses.db
-wiki.txt
 .vscode/
-lerne_data_frame.py
-Meine_SQLite_Verbindung.session.sql
+test/
 /Users/kenansezgin/Documents/PROJECTS/Haushaltsbuch/
-übung.py
-testing.py
-test.db
+expenses.db
+Meine_SQLite_Verbindung.session.sql
+wiki.txt
+
+
+
 
 
 
